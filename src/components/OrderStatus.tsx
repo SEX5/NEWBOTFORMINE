@@ -139,7 +139,7 @@ export default function OrderStatus({ orderId, onNavigate }: OrderStatusProps) {
           <div className="flex justify-between items-center text-xs border-b border-[#1A1A1A] pb-3">
             <span className="text-zinc-600 font-bold uppercase text-[9px] font-mono">PRODUCT METHOD:</span>
             <span className="text-zinc-300 font-bold uppercase tracking-wide">
-              {order.order_type === "account" ? "Pre-made Modded Account" : `Resource Patch: ${order.patch_type}`}
+              {order.order_type === "account" ? "Resource Package" : `Resource Patch: ${order.patch_type}`}
             </span>
           </div>
 
@@ -156,28 +156,17 @@ export default function OrderStatus({ orderId, onNavigate }: OrderStatusProps) {
           )}
         </div>
 
-        {/* Credentials Delivery Panel */}
+        {/* Credentials Delivery Panel for Order Type Account */}
         {order.status === "completed" && order.order_type === "account" && (
-          <div className="bg-black border border-[#222] p-5 rounded space-y-3">
-            <span className="block text-[10px] font-mono text-[#FFD700] uppercase font-bold tracking-widest flex items-center gap-2">
+          <div className="bg-black border border-emerald-500/10 bg-emerald-500/[0.02] p-5 rounded space-y-2">
+            <span className="block text-[10px] font-mono text-emerald-400 uppercase font-bold tracking-widest flex items-center gap-2">
               <UserCheck className="w-4 h-4 text-emerald-400" />
-              Your Credentials are Ready!
+              ✓ PACKAGE INJECTION FULFILLED SUCCESSFULLY
             </span>
             
-            <div className="p-4 bg-zinc-950 border border-zinc-900 rounded font-mono text-xs space-y-2 text-[#FFD700] relative">
-              <p>📧 Email: <span className="text-white select-all">{order.delivered_email || `acct-${order.order_id.toLowerCase()}@carx.shop`}</span></p>
-              <p>🔐 Password: <span className="text-white select-all">{order.delivered_password || "[Standard Decrypted Password]"}</span></p>
-              <p className="text-zinc-500 font-mono text-[9px] lowercase mt-3 font-normal italic">
-                * login to CarX Street on iOS/Android now and enjoy!
-              </p>
-
-              <button
-                onClick={() => handleCopy(`Email: ${order.delivered_email || `acct-${order.order_id.toLowerCase()}@carx.shop`}\nPassword: ${order.delivered_password || ""}`)}
-                className="absolute right-3 bottom-3 py-1.5 px-3 bg-[#111] hover:bg-[#222] text-[10px] text-zinc-400 font-bold uppercase tracking-wide border border-zinc-800 rounded transition-all cursor-pointer"
-              >
-                {copied ? "COPIED ✓" : "COPY DETAILS"}
-              </button>
-            </div>
+            <p className="text-zinc-400 text-xs leading-relaxed font-sans">
+              Our autopilot bot has completed your package resource adjustments. Injected modifications are now synchronizing on your CarX account: <strong>{order.carx_email || order.delivered_email}</strong>. Log out and log back into your CarX app to prompt files validation and enjoy your resources!
+            </p>
           </div>
         )}
 
