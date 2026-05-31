@@ -2,6 +2,27 @@ import React, { useState, useEffect } from "react";
 import { Check, Coins, Trophy, Car, Map, ShieldCheck, Mail, Loader2, Sparkles, QrCode, UploadCloud, Copy, ArrowRight, ArrowLeft, KeyRound, ExternalLink, RefreshCw } from "lucide-react";
 import { CarXAccount } from "../types";
 import { motion, AnimatePresence } from "motion/react";
+import driftCarImg from "../assets/images/drift_car_pack_bg_1780230291143.png";
+import hypercarImg from "../assets/images/hypercar_pack_bg_1780230312001.png";
+
+const getAccountImage = (acc: CarXAccount) => {
+  if (acc.image_url) {
+    if (acc.image_url.includes("drift_car_pack_bg")) return driftCarImg;
+    if (acc.image_url.includes("hypercar_pack_bg")) return hypercarImg;
+    return acc.image_url;
+  }
+  
+  // Fallbacks based on name
+  const nameLower = acc.name.toLowerCase();
+  if (nameLower.includes("drift") || nameLower.includes("tokyo") || nameLower.includes("starter")) {
+    return driftCarImg;
+  }
+  if (nameLower.includes("elite") || nameLower.includes("luxury") || nameLower.includes("supreme") || nameLower.includes("beast")) {
+    return hypercarImg;
+  }
+  
+  return "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&q=80&w=800";
+};
 
 interface AccountsCatalogProps {
   onNavigate: (view: string, arg?: string) => void;
@@ -276,19 +297,38 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
               className="group relative rounded bg-[#0A0A0A] border border-[#1A1A1A] hover:border-[#FFD700] transition-colors flex flex-col justify-between p-6"
               id={`account-card-${acc.id}`}
             >
-              {/* Card visual banner & Header info */}
-              <div className="flex justify-between items-start mb-6 border-b border-[#1A1A1A] pb-4">
-                <div>
-                  <span className="text-[9px] font-mono tracking-widest text-emerald-400 bg-emerald-500/5 px-2 py-0.5 border border-emerald-500/10 rounded-sm inline-block mb-1.5 uppercase font-bold">
-                    Level {acc.xp} XP
-                  </span>
-                  <h4 className="text-lg font-bold uppercase italic tracking-tighter text-white group-hover:text-[#FFD700] transition-colors">
-                    {acc.name}
-                  </h4>
+              <div>
+                {/* Premium Inventory Image Showcase */}
+                <div className="relative w-full h-40 mb-4 overflow-hidden rounded bg-zinc-950 border border-zinc-900 group-hover:border-zinc-850 group-hover:border-zinc-800 transition-colors">
+                  <img
+                    src={getAccountImage(acc)}
+                    alt={acc.name}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover grayscale opacity-75 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+                  
+                  {/* Visual Accent Badges */}
+                  <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 bg-black/80 backdrop-blur-sm border border-zinc-800 px-2 py-0.5 rounded-sm font-mono text-[8.5px] uppercase font-bold text-zinc-400">
+                    <span className="w-1.5 h-1.5 bg-[#FFD700] rounded-full animate-pulse"></span>
+                    READY TO INJECT
+                  </div>
                 </div>
-                <span className="text-[#FFD700] font-mono text-xl font-bold tracking-tight">
-                  ₱{Number(acc.price).toFixed(2)}
-                </span>
+
+                {/* Card visual banner & Header info */}
+                <div className="flex justify-between items-start mb-6 border-b border-[#1A1A1A] pb-4">
+                  <div>
+                    <span className="text-[9px] font-mono tracking-widest text-emerald-400 bg-emerald-500/5 px-2 py-0.5 border border-emerald-500/10 rounded-sm inline-block mb-1.5 uppercase font-bold">
+                      Level {acc.xp} XP
+                    </span>
+                    <h4 className="text-lg font-bold uppercase italic tracking-tighter text-white group-hover:text-[#FFD700] transition-colors">
+                      {acc.name}
+                    </h4>
+                  </div>
+                  <span className="text-[#FFD700] font-mono text-xl font-bold tracking-tight">
+                    ₱{Number(acc.price).toFixed(2)}
+                  </span>
+                </div>
               </div>
 
               {/* Statistical features using Sleek theme's metadata grid */}
@@ -378,11 +418,20 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
               {/* STEP 1: CREDENTIALS COLLECTION */}
               {modalStep === "credentials" && (
                 <form onSubmit={submitCredentialsStep} className="space-y-5">
-                  <div className="p-4 bg-zinc-950 border border-zinc-900 rounded space-y-1 text-xs">
+                  <div className="p-4 bg-zinc-950 border border-zinc-900 rounded space-y-3 text-xs">
                     <p className="text-white font-bold uppercase font-mono text-[10px] text-[#FFD700]">GARAGE SELECTION OVERVIEW</p>
-                    <div className="flex justify-between pt-1">
-                      <span className="text-zinc-400 font-bold uppercase">{selectedAccount.name}</span>
-                      <strong className="text-white font-mono">₱{Number(selectedAccount.price).toFixed(2)}</strong>
+                    <div className="relative w-full h-24 overflow-hidden rounded border border-zinc-900 bg-zinc-900">
+                      <img
+                        src={getAccountImage(selectedAccount)}
+                        alt={selectedAccount.name}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover opacity-85"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent"></div>
+                    </div>
+                    <div className="flex justify-between items-center pt-1 border-t border-zinc-900/60">
+                      <span className="text-white font-bold uppercase font-mono text-[10px]">{selectedAccount.name}</span>
+                      <strong className="text-[#FFD700] text-sm font-mono font-bold">₱{Number(selectedAccount.price).toFixed(2)}</strong>
                     </div>
                   </div>
 
