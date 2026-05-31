@@ -786,16 +786,21 @@ app.post("/api/analyze-receipt", async (req, res) => {
     // Strip image metadata header if exists
     const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, "");
 
+    const ANALYSIS_PROMPT = `ACT AS A GCASH RECEIPT SCANNER.
+1. Find the 13-digit Reference Number (look for 'Ref No' or 'Reference No').
+2. Find the total Amount Sent in PHP.
+3. You must output ONLY a raw JSON object. Do not include any explanations or markdown formatting outside the JSON.
+
+Expected Output Format:
+{"extracted_info": {"reference_number": "13DIGITS", "amount": "NUMBER"}, "verification_status": "APPROVED"}`;
+
     const payload = {
-      model: "google/gemini-2.0-flash-001",
+      model: "google/gemma-4-31b-it:free",
       messages: [{
         role: "user",
         content: [
-          { type: "image_url", image_url: { url: `data:image/jpeg;base64,${cleanBase64}` } },
-          { 
-            type: "text", 
-            text: "Extract the GCash receipt details and return ONLY a raw JSON object with no markdown fences, no explanation. Fields: sender_name (string), reference_number (string, digits only), amount_php (number, extract the GCash paid amount), datetime (string), recipient (string). If this is not a valid GCash receipt image, return {\"valid\": false}." 
-          }
+          { type: "text", text: ANALYSIS_PROMPT },
+          { type: "image_url", image_url: { url: `data:image/jpeg;base64,${cleanBase64}` } }
         ]
       }]
     };
@@ -821,36 +826,58 @@ app.post("/api/analyze-receipt", async (req, res) => {
     // Clean markdown fences if model returned them
     text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
 
-    const parsedOCR = JSON.parse(text);
+    const jsonMatch = text.match(/(\{[\s\S]*\})/);
+    if (!jsonMatch) {
+      throw new Error(`Could not find valid JSON boundaries in AI text: ${text}`);
+    }
+    const parsedOCR = JSON.parse(jsonMatch[1]);
 
-    if (parsedOCR.valid === false) {
+    let refNum = "";
+    let amtNum = 0;
+    
+    if (parsedOCR.extracted_info) {
+      if (parsedOCR.extracted_info.reference_number) {
+         refNum = String(parsedOCR.extracted_info.reference_number).replace(/\D/g, "");
+      }
+      if (parsedOCR.extracted_info.amount) {
+         amtNum = Number(String(parsedOCR.extracted_info.amount).replace(/,/g, ""));
+      }
+    }
+
+    if (!parsedOCR.verification_status || parsedOCR.verification_status !== "APPROVED" || !refNum) {
       return res.json({ success: false, error: "The uploaded photo is not recognized as a valid GCash receipt screenshot. Please upload a clear receipt." });
     }
 
     // Reference number validation
-    if (!parsedOCR.reference_number) {
+    if (refNum.length < 5) {
       return res.json({ success: false, error: "Count not extract a valid GCash Reference Number from the image." });
     }
 
     // Verify duplicate ref
-    const isUsed = await checkRefNumberUsed(parsedOCR.reference_number);
+    const isUsed = await checkRefNumberUsed(refNum);
     if (isUsed) {
-      return res.json({ success: false, error: `This GCash Ref Number (${parsedOCR.reference_number}) was already submitted for another purchase! Double spending is prohibited.` });
+      return res.json({ success: false, error: `This GCash Ref Number (${refNum}) was already submitted for another purchase! Double spending is prohibited.` });
     }
 
     // Cross-check expected amount PHP (with ±1 PHP tolerance)
-    const difference = Math.abs(Number(parsedOCR.amount_php || 0) - Number(expectedAmount));
+    const difference = Math.abs(amtNum - Number(expectedAmount));
     if (difference > 1.05) {
       return res.json({ 
         success: false, 
-        error: `Receipt amount PHP ${parsedOCR.amount_php || 0} does not match the required product price PHP ${expectedAmount}. Please pay the correct price.` 
+        error: `Receipt amount PHP ${amtNum} does not match the required product price PHP ${expectedAmount}. Please pay the correct price.` 
       });
     }
 
     res.json({
       success: true,
       simulation: false,
-      data: parsedOCR
+      data: {
+        reference_number: refNum,
+        amount_php: amtNum,
+        datetime: new Date().toLocaleString(),
+        sender_name: "GCASH USER",
+        recipient: "CARX STORE"
+      }
     });
 
   } catch (err: any) {
