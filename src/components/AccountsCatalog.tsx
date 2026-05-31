@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Check, Coins, Trophy, Car, Map, ShieldCheck, Mail, Loader2, Sparkles, QrCode, UploadCloud, Copy, ArrowRight, ArrowLeft, KeyRound, ExternalLink, RefreshCw } from "lucide-react";
 import { CarXAccount } from "../types";
 import { motion, AnimatePresence } from "motion/react";
-import driftCarImg from "../assets/images/drift_car_pack_bg_1780230291143.png";
-import hypercarImg from "../assets/images/hypercar_pack_bg_1780230312001.png";
+
+const driftCarImg = "https://images.unsplash.com/photo-1611245801312-51a8a014be0e?auto=format&fit=crop&q=80&w=1200";
+const hypercarImg = "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&q=80&w=1200";
 
 const getAccountImage = (acc: CarXAccount) => {
   if (acc.image_url) {
