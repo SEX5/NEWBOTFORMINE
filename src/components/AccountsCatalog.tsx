@@ -21,7 +21,6 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
   // Modal steps: "credentials" | "pay_instructions" | "upload_receipt" | "cloning_loader" | "delivery_panel"
   const [selectedAccount, setSelectedAccount] = useState<CarXAccount | null>(null);
   const [modalStep, setModalStep] = useState<"credentials" | "pay_instructions" | "upload_receipt" | "cloning_loader" | "delivery_panel">("credentials");
-  const [customerEmail, setCustomerEmail] = useState("");
   const [carxEmail, setCarxEmail] = useState("");
   const [carxPassword, setCarxPassword] = useState("");
   const [receiptBase64, setReceiptBase64] = useState<string | null>(null);
@@ -130,10 +129,6 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
   // Step 1: Submit Credentials
   const submitCredentialsStep = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerEmail || !customerEmail.includes("@")) {
-      setOcrError("Please input active delivery email coordinates.");
-      return;
-    }
     if (!carxEmail) {
       setOcrError("Please input your CarX login email/username.");
       return;
@@ -178,7 +173,6 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           order_type: "account",
-          customer_email: customerEmail,
           carx_email: carxEmail,
           carx_password: carxPassword,
           account_id: selectedAccount.id,
@@ -389,25 +383,6 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
                       <span className="text-zinc-400 font-bold uppercase">{selectedAccount.name}</span>
                       <strong className="text-white font-mono">₱{Number(selectedAccount.price).toFixed(2)}</strong>
                     </div>
-                  </div>
-
-                  {/* Delivery email */}
-                  <div className="space-y-1.5">
-                    <label htmlFor="modal-customer-email" className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wider font-mono text-left">
-                      Delivery / Status Update Email <span className="text-[#FF3333]">*</span>
-                    </label>
-                    <input
-                      id="modal-customer-email"
-                      type="email"
-                      required
-                      placeholder="customer@gmail.com"
-                      value={customerEmail}
-                      onChange={(e) => setCustomerEmail(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-805 border-zinc-800 p-2.5 rounded text-sm text-white focus:outline-none focus:border-[#FFD700] font-mono transition-colors"
-                    />
-                    <span className="text-[9px] text-zinc-500 block leading-tight text-left">
-                      * Status changes, tracking alerts, and confirmation reports will send here.
-                    </span>
                   </div>
 
                   {/* CarX login email/username */}
