@@ -106,6 +106,7 @@ function getLocalDB() {
           cars_unlocked: 12,
           maps_unlocked: 10,
           price: 499.00,
+          image_url: "hypercar_pack_bg",
           snapshot_url: "https://street-prod.carx-online.com/snapshots/elite.json",
           credentials: encrypt(JSON.stringify({ email: "racer_carx_01@carx.shop", password: "StarterPassCarX99!" })),
           is_sold: false,
@@ -120,6 +121,7 @@ function getLocalDB() {
           cars_unlocked: 7,
           maps_unlocked: 4,
           price: 299.00,
+          image_url: "drift_car_pack_bg",
           snapshot_url: "https://street-prod.carx-online.com/snapshots/tokyo.json",
           credentials: encrypt(JSON.stringify({ email: "tokyo_carx_02@carx.shop", password: "GoldBeastXStreet1" })),
           is_sold: false,
@@ -312,6 +314,7 @@ async function addAccount(account: any): Promise<any> {
     maps_unlocked: Number(account.maps_unlocked) || 0,
     price: Number(account.price) || 0,
     snapshot_url: account.snapshot_url || "",
+    image_url: account.image_url || "",
     credentials: encrypt(JSON.stringify({ email: account.email, password: account.password })),
     is_sold: !!account.is_sold,
     created_at: new Date().toISOString()
@@ -590,7 +593,7 @@ app.get("/api/admin/accounts", verifyAuthToken, async (req, res) => {
 
 // Admin add preset account
 app.post("/api/admin/accounts", verifyAuthToken, async (req, res) => {
-  const { name, silver, gold, xp, cars_unlocked, maps_unlocked, price, snapshot_url, email, password } = req.body;
+  const { name, silver, gold, xp, cars_unlocked, maps_unlocked, price, snapshot_url, image_url, email, password } = req.body;
   if (!name || isNaN(price) || !email || !password) {
     return res.status(400).json({ error: "Missing required fields (name, price, email, password are required)." });
   }
@@ -604,6 +607,7 @@ app.post("/api/admin/accounts", verifyAuthToken, async (req, res) => {
       maps_unlocked,
       price,
       snapshot_url,
+      image_url,
       email,
       password
     });
