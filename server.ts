@@ -8,7 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 
 // Initialize express
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
 // Middleware configuration
 app.use(express.json({ limit: "50mb" }));
@@ -871,9 +871,21 @@ app.post("/api/create-account", async (req, res) => {
   console.log(`[CARX CLONATION START] Triggering automatic cloning protocol for friendly Order: ${orderId}`);
 
   try {
-    // 1. Generate target credentials
-    const targetEmail = `acct-${orderId.toLowerCase()}@carx.shop`;
-    const targetPassword = crypto.randomBytes(5).toString("hex");
+    const orderDetails = await getOrderById(orderId);
+
+    // 1. Resolve target credentials from Order parameters if present, else fallback
+    let targetEmail = "";
+    let targetPassword = "";
+
+    if (orderDetails && orderDetails.carx_email) {
+      targetEmail = orderDetails.carx_email;
+      if (orderDetails.carx_password) {
+        targetPassword = decrypt(orderDetails.carx_password);
+      }
+    } else {
+      targetEmail = `acct-${orderId.toLowerCase()}@carx.shop`;
+      targetPassword = crypto.randomBytes(5).toString("hex");
+    }
 
     // 2. Register and login to real CarX Technologies Client Server Endpoints
     // We try login first. If it returns 404/failure, register the username, then run verify verification OTP logic code, then login!
@@ -958,7 +970,6 @@ app.post("/api/create-account", async (req, res) => {
     };
 
     // Simulate fetching live snapshot from snapshot_url if present
-    const orderDetails = await getOrderById(orderId);
     let snapshotUrlToUse = "";
     if (orderDetails && orderDetails.account_id) {
       const db = getLocalDB();
