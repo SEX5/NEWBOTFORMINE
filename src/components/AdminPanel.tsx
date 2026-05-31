@@ -252,7 +252,7 @@ export default function AdminPanel() {
   // Delete account row
   const handleDeleteAccount = async (id: string) => {
     if (!token) return;
-    if (!window.confirm("Are you sure you want to delete this pre-made account?")) return;
+    if (!window.confirm("Are you sure you want to delete this resource package?")) return;
     try {
       const resp = await fetch(`/api/admin/accounts/${id}`, {
         method: "DELETE",
