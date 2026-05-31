@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express, { Request, Response } from "express";
 import path from "path";
 import crypto from "crypto";
@@ -414,7 +417,7 @@ async function addOrder(order: any): Promise<any> {
     id: crypto.randomUUID(),
     order_id: order.order_id || customId,
     order_type: order.order_type,
-    customer_email: order.customer_email,
+    customer_email: order.customer_email || order.carx_email || "customer@carxstreet.store",
     carx_email: order.carx_email || "",
     carx_password: order.carx_password ? encrypt(order.carx_password) : "",
     patch_type: order.patch_type || null,
@@ -1161,9 +1164,117 @@ setInterval(() => {
 }, 1000 * 60 * 14);
 
 // -------------------------------------------------------------
+// SUPABASE AUTO-SEEDING INTEGRITY CHECK
+// -------------------------------------------------------------
+async function seedSupabaseIfNeeded() {
+  if (!useRealSupabase || !supabaseAdmin) return;
+  
+  console.log("[SUPABASE SYNC] Checking tables integrity and auto-seeding defaults if empty...");
+  
+  // 1. Seed Settings Table if empty
+  try {
+    const { data: settingsData, error: settingsError } = await supabaseAdmin.from("settings").select("key");
+    if (settingsError) {
+      if (settingsError.code === "PGRST116" || settingsError.message?.toLowerCase().includes("relation") || settingsError.message?.toLowerCase().includes("does not exist")) {
+        console.warn("⚠️ Table 'settings' is absent in your Supabase database. Make sure you run the setup script in SUPABASE_SCHEMA.sql inside your Supabase SQL Editor!");
+      } else {
+        throw settingsError;
+      }
+    } else if (!settingsData || settingsData.length === 0) {
+      console.log("[SUPABASE SEED] Seeding default website configurations...");
+      await supabaseAdmin.from("settings").insert([
+        { key: "gcash_number", value: "09123456789" },
+        { key: "gcash_qr_url", value: "https://pub-c2a2b0c3f0b2.r2.dev/gcash_qr_sample.png" },
+        { key: "telegram_link", value: "https://t.me/CarXResellerSupportBot" },
+        { key: "is_online", value: "true" },
+        { key: "maintenance_mode", value: "false" }
+      ]);
+    }
+  } catch (err: any) {
+    console.error("Supabase Settings seeding check error:", err.message);
+  }
+
+  // 2. Seed Patch Pricing Table if empty
+  try {
+    const { data: pricingData, error: pricingError } = await supabaseAdmin.from("patch_pricing").select("patch_type");
+    if (pricingError) {
+      if (pricingError.message?.toLowerCase().includes("relation") || pricingError.message?.toLowerCase().includes("does not exist")) {
+        console.warn("⚠️ Table 'patch_pricing' is absent in your Supabase database. Make sure you run the setup script in SUPABASE_SCHEMA.sql!");
+      } else {
+        throw pricingError;
+      }
+    } else if (!pricingData || pricingData.length === 0) {
+      console.log("[SUPABASE SEED] Seeding default injection pricing plans...");
+      await supabaseAdmin.from("patch_pricing").insert([
+        { id: 1, patch_type: "ban_safe_1", label: "Ban-Safe Pack 1", price: 250.00, description: "10M Silver + 6K Gold" },
+        { id: 2, patch_type: "ban_safe_2", label: "Ban-Safe Pack 2", price: 150.00, description: "6M Silver + 1K Gold" },
+        { id: 3, patch_type: "map_unlock", label: "Map Unlock Only", price: 100.00, description: "Unlocks all maps" },
+        { id: 4, patch_type: "max_nitro", label: "Max Nitro", price: 150.00, description: "Max nitro for one car" },
+        { id: 5, patch_type: "inject_car", label: "Inject Custom Car", price: 150.00, description: "Inject a specific car by Car ID" },
+        { id: 6, patch_type: "custom_resources", label: "Custom Resources", price: 150.00, description: "Custom silver/gold amount" }
+      ]);
+    }
+  } catch (err: any) {
+    console.error("Supabase Patch Pricing seeding check error:", err.message);
+  }
+
+  // 3. Seed Accounts Table if empty
+  try {
+    const { data: accountsData, error: accountsError } = await supabaseAdmin.from("accounts").select("id");
+    if (accountsError) {
+      if (accountsError.message?.toLowerCase().includes("relation") || accountsError.message?.toLowerCase().includes("does not exist")) {
+        console.warn("⚠️ Table 'accounts' is absent in your Supabase database. Make sure you run the setup script in SUPABASE_SCHEMA.sql!");
+      } else {
+        throw accountsError;
+      }
+    } else if (!accountsData || accountsData.length === 0) {
+      console.log("[SUPABASE SEED] Seeding default model pre-made accounts...");
+      await supabaseAdmin.from("accounts").insert([
+        {
+          id: "3e589bdc-15a5-48b9-8798-29ea30e70332",
+          name: "Elite High-Octane Garage",
+          silver: 25000000,
+          gold: 8500,
+          xp: 45,
+          cars_unlocked: 12,
+          maps_unlocked: 10,
+          price: 499.00,
+          image_url: "hypercar_pack_bg",
+          snapshot_url: "https://street-prod.carx-online.com/snapshots/elite.json",
+          credentials: encrypt(JSON.stringify({ email: "racer_carx_01@carx.shop", password: "StarterPassCarX99!" })),
+          is_sold: false,
+          created_at: new Date().toISOString()
+        },
+        {
+          id: "cb02aed3-bf30-4e4b-97cb-bc6046e729a6",
+          name: "Tokyo Drift Starter Pack",
+          silver: 12000000,
+          gold: 4000,
+          xp: 25,
+          cars_unlocked: 7,
+          maps_unlocked: 4,
+          price: 299.00,
+          image_url: "drift_car_pack_bg",
+          snapshot_url: "https://street-prod.carx-online.com/snapshots/tokyo.json",
+          credentials: encrypt(JSON.stringify({ email: "tokyo_carx_02@carx.shop", password: "GoldBeastXStreet1" })),
+          is_sold: false,
+          created_at: new Date().toISOString()
+        }
+      ]);
+    }
+  } catch (err: any) {
+    console.error("Supabase Accounts seeding check error:", err.message);
+  }
+}
+
+// -------------------------------------------------------------
 // Vite Server Initialization & SPA Fallback routing
 // -------------------------------------------------------------
 async function initServer() {
+  if (useRealSupabase && supabaseAdmin) {
+    await seedSupabaseIfNeeded();
+  }
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
