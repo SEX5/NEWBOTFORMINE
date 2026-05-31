@@ -115,7 +115,7 @@ export default function Home({ onNavigate, settings = {} }: HomeProps) {
                 className="group relative cursor-pointer px-6 py-3.5 bg-[#FFD700] hover:bg-white text-black font-black uppercase text-xs tracking-wider transition-all rounded-sm flex items-center justify-center gap-2"
                 id="btn-nav-catalog"
               >
-                <span>Browse Pre-Made Accounts</span>
+                <span>Browse Resource Packages</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-black" />
               </button>
 
@@ -184,7 +184,7 @@ export default function Home({ onNavigate, settings = {} }: HomeProps) {
           <div>
             <h3 className="font-display font-bold text-base text-white uppercase italic tracking-tight mb-2">Safe & Tested</h3>
             <p className="text-zinc-400 text-xs leading-relaxed font-sans">
-              All pre-made packages utilize secure file mirroring structures. Banned bypass tunnels have 99.8% safe rating indexes.
+              All injection packages utilize secure file mirroring structures. Banned bypass tunnels have 99.8% safe rating indexes.
             </p>
           </div>
         </div>
