@@ -195,6 +195,21 @@ export default function OrderStatus({ orderId, onNavigate }: OrderStatusProps) {
           </div>
         )}
 
+        <div className="bg-[#FFD700]/5 border border-[#FFD700]/10 p-4 rounded text-center space-y-2 font-mono text-[10px]">
+          <p className="text-[#FFD700] font-bold uppercase tracking-wider">NEED MANUAL APPROVAL OR HELP?</p>
+          <p className="text-zinc-500 max-w-md mx-auto leading-normal">
+            If you need manual assistance, or want to instantly approve your injection via messenger support, send your Receipt directly to our admin.
+          </p>
+          <a 
+            href="https://m.me/lark.abalunan.1" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FFD700] text-black font-extrabold uppercase rounded-sm hover:bg-white transition-colors text-[9px] tracking-wider"
+          >
+            💬 MESSAGE ADMIN (m.me/lark.abalunan.1)
+          </a>
+        </div>
+
         {/* Action Bottom Navigator */}
         <div className="flex gap-4 pt-4 border-t border-[#1A1A1A]">
           <button
