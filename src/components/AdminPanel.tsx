@@ -50,6 +50,7 @@ export default function AdminPanel() {
   const [newAccEmail, setNewAccEmail] = useState("");
   const [newAccPassword, setNewAccPassword] = useState("");
   const [newAccSnapUrl, setNewAccSnapUrl] = useState("");
+  const [newAccImageUrl, setNewAccImageUrl] = useState("");
   const [accFormError, setAccFormError] = useState<string | null>(null);
   const [accFormSuccess, setAccFormSuccess] = useState(false);
 
@@ -195,6 +196,7 @@ export default function AdminPanel() {
           maps_unlocked: newAccMaps,
           price: newAccPrice,
           snapshot_url: newAccSnapUrl,
+          image_url: newAccImageUrl,
           email: newAccEmail,
           password: newAccPassword
         })
@@ -210,6 +212,7 @@ export default function AdminPanel() {
       setNewAccEmail("");
       setNewAccPassword("");
       setNewAccSnapUrl("");
+      setNewAccImageUrl("");
       loadDashboardData();
 
     } catch (err: any) {
@@ -680,6 +683,28 @@ export default function AdminPanel() {
                   value={newAccSnapUrl}
                   onChange={(e) => setNewAccSnapUrl(e.target.value)}
                   className="w-full bg-zinc-950 border border-zinc-900 p-2 text-white rounded font-mono text-[11px]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[9px] text-zinc-500 font-mono uppercase font-bold tracking-wider">Inventory Display Image (Vehicle Theme)</label>
+                <select
+                  value={newAccImageUrl}
+                  onChange={(e) => setNewAccImageUrl(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-900 p-2 text-white rounded font-mono text-xs focus:border-[#FFD700]"
+                >
+                  <option value="">Default Tuner Fallback</option>
+                  <option value="drift_car_pack_bg">Tokyo JDM Drift (Generated)</option>
+                  <option value="hypercar_pack_bg">Minimalist Hypercar (Generated)</option>
+                  <option value="https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&q=80&w=800">Unsplash Golden Supercar</option>
+                  <option value="https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&q=80&w=800">Unsplash JDM Drift Racer</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Or paste custom image URL directly..."
+                  value={newAccImageUrl}
+                  onChange={(e) => setNewAccImageUrl(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-900 p-2 text-white rounded font-mono text-[10px] mt-1"
                 />
               </div>
 
