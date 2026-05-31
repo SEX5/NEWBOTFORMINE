@@ -18,10 +18,12 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
     gcash_qr_url: "https://pub-c2a2b0c3f0b2.r2.dev/gcash_qr_sample.png"
   });
 
-  // Modal steps: "pay_instructions" | "upload_receipt" | "cloning_loader" | "delivery_panel"
+  // Modal steps: "credentials" | "pay_instructions" | "upload_receipt" | "cloning_loader" | "delivery_panel"
   const [selectedAccount, setSelectedAccount] = useState<CarXAccount | null>(null);
-  const [modalStep, setModalStep] = useState<"pay_instructions" | "upload_receipt" | "cloning_loader" | "delivery_panel">("pay_instructions");
-  const [customerEmail, setCustomerEmail] = useState("customer@store.local");
+  const [modalStep, setModalStep] = useState<"credentials" | "pay_instructions" | "upload_receipt" | "cloning_loader" | "delivery_panel">("credentials");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [carxEmail, setCarxEmail] = useState("");
+  const [carxPassword, setCarxPassword] = useState("");
   const [receiptBase64, setReceiptBase64] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
@@ -66,13 +68,19 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
 
   const handleOpenCheckoutModal = (acc: CarXAccount) => {
     setSelectedAccount(acc);
-    setModalStep("pay_instructions");
+    setModalStep("credentials");
+    setCustomerEmail("");
+    setCarxEmail("");
+    setCarxPassword("");
     setOcrError(null);
     setReceiptBase64(null);
   };
 
   const handleCloseCheckoutModal = () => {
     setSelectedAccount(null);
+    setCustomerEmail("");
+    setCarxEmail("");
+    setCarxPassword("");
     setReceiptBase64(null);
     setOcrError(null);
     setCurrentOrderId("");
@@ -119,11 +127,19 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
     }
   };
 
-  // Step 1: Submit Email
-  const submitEmailStep = (e: React.FormEvent) => {
+  // Step 1: Submit Credentials
+  const submitCredentialsStep = (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerEmail || !customerEmail.includes("@")) {
       setOcrError("Please input active delivery email coordinates.");
+      return;
+    }
+    if (!carxEmail) {
+      setOcrError("Please input your CarX login email/username.");
+      return;
+    }
+    if (!carxPassword) {
+      setOcrError("Please input your CarX account password.");
       return;
     }
     setOcrError(null);
@@ -163,6 +179,8 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
         body: JSON.stringify({
           order_type: "account",
           customer_email: customerEmail,
+          carx_email: carxEmail,
+          carx_password: carxPassword,
           account_id: selectedAccount.id,
           amount_paid: selectedAccount.price,
           gcash_ref_number: ocrResult.data.reference_number,
@@ -174,7 +192,7 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
       const orderResult = await orderResp.json();
       if (!orderResp.ok || !orderResult.success) {
         throw new Error(orderResult.error || "Failed registering order index block.");
-      }
+      } 
 
       const generatedOrderId = orderResult.order.order_id;
       setCurrentOrderId(generatedOrderId);
@@ -362,6 +380,97 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
                 )}
               </div>
 
+              {/* STEP 1: CREDENTIALS COLLECTION */}
+              {modalStep === "credentials" && (
+                <form onSubmit={submitCredentialsStep} className="space-y-5">
+                  <div className="p-4 bg-zinc-950 border border-zinc-900 rounded space-y-1 text-xs">
+                    <p className="text-white font-bold uppercase font-mono text-[10px] text-[#FFD700]">GARAGE SELECTION OVERVIEW</p>
+                    <div className="flex justify-between pt-1">
+                      <span className="text-zinc-400 font-bold uppercase">{selectedAccount.name}</span>
+                      <strong className="text-white font-mono">₱{Number(selectedAccount.price).toFixed(2)}</strong>
+                    </div>
+                  </div>
+
+                  {/* Delivery email */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="modal-customer-email" className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wider font-mono text-left">
+                      Delivery / Status Update Email <span className="text-[#FF3333]">*</span>
+                    </label>
+                    <input
+                      id="modal-customer-email"
+                      type="email"
+                      required
+                      placeholder="customer@gmail.com"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-805 border-zinc-800 p-2.5 rounded text-sm text-white focus:outline-none focus:border-[#FFD700] font-mono transition-colors"
+                    />
+                    <span className="text-[9px] text-zinc-500 block leading-tight text-left">
+                      * Status changes, tracking alerts, and confirmation reports will send here.
+                    </span>
+                  </div>
+
+                  {/* CarX login email/username */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="modal-carx-email" className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wider font-mono text-left">
+                      CarX Login Email / Username ID <span className="text-[#FF3333]">*</span>
+                    </label>
+                    <input
+                      id="modal-carx-email"
+                      type="text"
+                      required
+                      placeholder="player_username"
+                      value={carxEmail}
+                      onChange={(e) => setCarxEmail(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-805 border-zinc-800 p-2.5 rounded text-sm text-white focus:outline-none focus:border-[#FFD700] font-mono transition-colors"
+                    />
+                  </div>
+
+                  {/* CarX Password */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="modal-carx-password" className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wider font-mono text-left">
+                      CarX Account Password <span className="text-[#FF3333]">*</span>
+                    </label>
+                    <input
+                      id="modal-carx-password"
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={carxPassword}
+                      onChange={(e) => setCarxPassword(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-805 border-zinc-800 p-2.5 rounded text-sm text-white focus:outline-none focus:border-[#FFD700] font-mono transition-colors"
+                    />
+                    <span className="text-[9px] text-zinc-500 block leading-tight text-left">
+                      * Required to verify and inject progression data directly through CarX Street servers.
+                    </span>
+                  </div>
+
+                  {ocrError && (
+                    <p className="text-xs text-[#FF3333] font-mono leading-relaxed bg-[#FF3333]/5 border border-[#FF3333]/15 p-2 rounded text-left">
+                      ⚠ {ocrError}
+                    </p>
+                  )}
+
+                  <div className="flex gap-4 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleCloseCheckoutModal}
+                      className="w-1/2 py-2.5 bg-black hover:bg-[#111] text-zinc-500 hover:text-white font-mono text-xs uppercase border border-zinc-800"
+                    >
+                      CANCEL
+                    </button>
+                    
+                    <button
+                      type="submit"
+                      className="w-1/2 py-2.5 bg-[#FFD700] hover:bg-white text-black font-black uppercase tracking-wider font-mono text-xs flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <span>NEXT: PAY VIA GCASH</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-black" />
+                    </button>
+                  </div>
+                </form>
+              )}
+
               {/* STEP 2: GCASH STEPS */}
               {modalStep === "pay_instructions" && (
                 <div className="space-y-6">
@@ -409,10 +518,10 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
 
                   <div className="flex gap-4 pt-2">
                     <button
-                      onClick={handleCloseCheckoutModal}
+                      onClick={() => setModalStep("credentials")}
                       className="w-1/2 py-2.5 bg-black hover:bg-[#111] text-zinc-500 hover:text-white font-mono text-xs uppercase border border-zinc-800"
                     >
-                      CANCEL
+                      BACK
                     </button>
                     
                     <button
