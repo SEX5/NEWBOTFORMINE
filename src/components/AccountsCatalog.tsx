@@ -53,7 +53,7 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
         // Load accounts
         const accountsResp = await fetch("/api/accounts");
         if (!accountsResp.ok) {
-          throw new Error("Failed to load pre-made account listings.");
+          throw new Error("Failed to load resource package listings.");
         }
         const data = await accountsResp.json();
         setAccounts(data);
@@ -239,10 +239,10 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
       {/* Page Header */}
       <div className="text-center md:text-left mb-12">
         <h1 className="text-3xl md:text-5xl font-display font-black tracking-tight mb-4 text-white uppercase italic">
-          PRE-MADE <span className="text-[#FFD700]">MODDED LABS</span>
+          RESOURCE <span className="text-[#FFD700]">PACKAGES</span>
         </h1>
         <p className="text-zinc-500 font-sans max-w-2xl text-xs md:text-sm">
-          All slots undergo multi-phase secure verification, completely safe from server bans, populated with requested resources, and support direct on-screen credential delivery. Select your garage package below.
+          All packages undergo multi-phase secure verification, completely safe from server bans, and are directly injected into your own provided CarX details. Select your garage package below.
         </p>
       </div>
 
@@ -659,38 +659,27 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
                       <Check className="w-6 h-6 text-emerald-400" />
                     </span>
                     <h4 className="text-xl font-black italic uppercase text-white tracking-tight">
-                      CONGRATULATIONS! RACER LOGINS GENERATED
+                      CONGRATULATIONS! PACKAGE INJECTED
                     </h4>
                     <p className="text-zinc-500 text-xs leading-relaxed max-w-md mx-auto">
-                      Your pre-made CarX modded account was fully built and uploaded using the autopilot bot. Please copy the profile keys below.
+                      Your chosen resource package was successfully built and securely injected into your CarX account using our autopilot system. You can now log into your account to see the changes.
                     </p>
                   </div>
 
                   <div className="bg-zinc-950 border border-zinc-900 p-4 rounded-md space-y-2.5 relative">
                     <span className="block text-[10px] font-mono text-[#FFD700] uppercase font-bold">
-                      YOUR EXCLUSIVE ACCESS CREDENTIALS
+                      INJECTION CONFIRMATION DETAILS
                     </span>
                     
                     <div className="p-3 bg-black border border-zinc-900 rounded font-mono text-xs space-y-1 text-zinc-300 relative">
-                      <p>📧 Email: <span className="text-white select-all">{deliveredEmail}</span></p>
-                      <p>🔐 Password: <span className="text-white select-all">{deliveredPassword}</span></p>
-
-                      <button
-                        onClick={() => handleCopy(`Email: ${deliveredEmail}\nPassword: ${deliveredPassword}`)}
-                        className="absolute right-3.5 bottom-3.5 py-1 px-2.5 bg-zinc-950 border border-zinc-800 text-[10px] hover:text-white rounded font-bold cursor-pointer"
-                      >
-                        {copied ? "COPIED ✓" : "COPY"}
-                      </button>
+                      <p>📧 CarX Email: <span className="text-[#FFD700]">{carxEmail}</span></p>
+                      <p>📦 Package: <span className="text-[#FFD700]">{selectedAccount.name}</span></p>
                     </div>
 
-                    <p className="text-[10px] text-zinc-500 leading-normal lowercase italic">
-                      * write these down! You can also track this purchase on security order sequence ID: <strong>{currentOrderId}</strong>
+                    <p className="text-[10px] text-zinc-500 leading-normal lowercase italic mt-2">
+                      * You can track this purchase on security order sequence ID: <strong>{currentOrderId}</strong>
                     </p>
                   </div>
-
-                  {copied && (
-                    <p className="text-center text-emerald-400 text-xs font-mono">✓ Hot credentials copied safely!</p>
-                  )}
 
                   <div className="flex gap-4 pt-2">
                     <button
