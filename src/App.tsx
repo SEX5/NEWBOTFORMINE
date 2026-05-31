@@ -165,7 +165,7 @@ export default function App() {
                 currentView === "accounts" ? "text-[#FFD700]" : "text-gray-400"
               }`}
             >
-              Pre-made Accounts
+              Resource Packages
             </button>
             <button
               onClick={() => navigateTo("order")}
