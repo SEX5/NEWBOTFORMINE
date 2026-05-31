@@ -14,8 +14,8 @@ export default function AdminPanel() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
 
-  // 5 Dashboard Tabs: "orders" | "accounts" | "pricing" | "stats" | "settings"
-  const [activeTab, setActiveTab] = useState<"orders" | "accounts" | "pricing" | "stats" | "settings">("orders");
+  // 6 Dashboard Tabs: "orders" | "accounts" | "pricing" | "stats" | "settings" | "logs"
+  const [activeTab, setActiveTab] = useState<"orders" | "accounts" | "pricing" | "stats" | "settings" | "logs">("orders");
   const [orders, setOrders] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [patchPricing, setPatchPricing] = useState<any[]>([]);
@@ -437,7 +437,8 @@ export default function AdminPanel() {
           { tab: "accounts", icon: <Database className="w-4 h-4" />, label: `GARAGE STOCK (${accounts.length})` },
           { tab: "pricing", icon: <Coins className="w-4 h-4" />, label: "PATCH PRICING PHP" },
           { tab: "stats", icon: <TrendingUp className="w-4 h-4" />, label: "PERFORMANCE STATS" },
-          { tab: "settings", icon: <Settings className="w-4 h-4" />, label: "SYSTEM SETTINGS" }
+          { tab: "settings", icon: <Settings className="w-4 h-4" />, label: "SYSTEM SETTINGS" },
+          { tab: "logs", icon: <Layers className="w-4 h-4" />, label: `ALERTS & LOGS (${stats?.system_logs?.length || 0})` }
         ].map((item) => (
           <button
             key={item.tab}
@@ -1024,6 +1025,95 @@ export default function AdminPanel() {
               {updatingSettings ? "PROPAGATING PARAMETERS..." : "COMMIT GLOBAL SETTINGS"}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* TAB 6: SYSTEM ALERTS AND LOGS */}
+      {activeTab === "logs" && (
+        <div className="space-y-6" id="admin-tab-logs">
+          <div className="bg-[#0A0A0A] border border-[#1A1A1A] p-6 rounded">
+            <div className="border-b border-zinc-900 pb-4 mb-6">
+              <h2 className="text-sm font-mono font-bold text-[#FFD700] uppercase tracking-wider flex items-center gap-2">
+                <Layers className="w-4 h-4 text-[#FFD700] animate-pulse" />
+                🚨 LIVE OCR SYSTEM ALERTS & TELEMETRY QUEUE
+              </h2>
+              <p className="text-xs text-zinc-500 mt-1 font-sans leading-relaxed">
+                These notifications and telemetry events are generated and stored automatically whenever client receipt scanner checks fail, validation anomalies occur, or cloner pipeline exceptions trigger. Directly click on m.me links or details to assist customers manually.
+              </p>
+            </div>
+
+            {!stats?.system_logs || stats.system_logs.length === 0 ? (
+              <div className="p-12 text-center bg-black border border-zinc-900 rounded-lg">
+                <CheckCircle2 className="w-8 h-8 text-[#FFD700] mx-auto opacity-75 mb-3" />
+                <p className="font-mono text-zinc-400 text-xs uppercase font-bold tracking-wider">
+                  ✓ ALL CHANNELS NOMINAL — ZERO FAILURES REGISTERED
+                </p>
+                <p className="text-[10px] text-zinc-500 mt-2 font-sans max-w-sm mx-auto leading-relaxed">
+                  The automated OpenRouter/Gemini receipt scanning engine has completed all transactions with pristine integrity.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {[...stats.system_logs].reverse().map((log: any, idx: number) => {
+                  const isScanFail = log.type === "GCASH_SCAN_FAILED";
+                  return (
+                    <div 
+                      key={log.id || idx} 
+                      className={`p-4 border rounded bg-black flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:bg-zinc-950/40 ${
+                        isScanFail ? "border-[#FF3333]/20 hover:border-[#FF3333]/40" : "border-yellow-500/20 hover:border-yellow-500/40"
+                      }`}
+                    >
+                      <div className="space-y-2 flex-1">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <span className={`px-2 py-0.5 font-mono text-[9px] font-black uppercase rounded ${
+                            isScanFail ? "bg-[#FF3333]/10 text-[#FF3333]" : "bg-yellow-500/10 text-[#FFD700]"
+                          }`}>
+                            {log.type}
+                          </span>
+                          <span className="text-[10px] font-mono text-zinc-500">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        
+                        <p className="text-zinc-200 text-xs font-mono leading-relaxed select-text">
+                          {log.message}
+                        </p>
+
+                        <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-[10px] font-mono text-zinc-500 pt-1 border-t border-zinc-950">
+                          {log.fileName && (
+                            <span className="flex items-center gap-1">
+                              📁 FILE: <strong className="text-zinc-300">{log.fileName}</strong>
+                            </span>
+                          )}
+                          {log.expectedAmount && (
+                            <span className="flex items-center gap-1">
+                              💰 ASKED PRICE: <strong className="text-zinc-300">₱{log.expectedAmount} PHP</strong>
+                            </span>
+                          )}
+                          {log.orderId && (
+                            <span className="flex items-center gap-1">
+                              📦 ORDER NO: <strong className="text-[#FFD700]">{log.orderId}</strong>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start md:self-center">
+                        <a 
+                          href="https://m.me/lark.abalunan.1"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 bg-zinc-900 hover:bg-[#FFD700] hover:text-black hover:border-transparent border border-zinc-800 rounded font-mono text-[9px] text-zinc-300 uppercase font-black tracking-wider transition-all animate-pulse"
+                        >
+                          💬 MESSAGE CUSTOMER
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
