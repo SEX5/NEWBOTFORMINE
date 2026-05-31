@@ -179,6 +179,27 @@ function saveLocalDB(data: any) {
   }
 }
 
+function logSystemError(type: string, message: string, details: any = {}) {
+  try {
+    const db = getLocalDB();
+    db.system_logs = db.system_logs || [];
+    // Keep maximum 100 logs to prevent file growth
+    if (db.system_logs.length >= 100) {
+      db.system_logs.shift();
+    }
+    db.system_logs.push({
+      id: "log_" + Math.random().toString(36).substring(2, 9),
+      timestamp: new Date().toISOString(),
+      type,
+      message,
+      ...details
+    });
+    saveLocalDB(db);
+  } catch (err) {
+    console.error("Failed to write system log:", err);
+  }
+}
+
 // -------------------------------------------------------------
 // Database abstractions
 // -------------------------------------------------------------
@@ -735,12 +756,14 @@ app.get("/api/admin/stats", verifyAuthToken, async (req, res) => {
       return orderDate === contextDateStr;
     }).length;
 
+    const db = getLocalDB();
     res.json({
       totalRevenue,
       ordersCount,
       ordersToday,
       activeAccountsCount,
-      soldAccountsCount
+      soldAccountsCount,
+      system_logs: db.system_logs || []
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -751,7 +774,7 @@ app.get("/api/admin/stats", verifyAuthToken, async (req, res) => {
 // GCASH AI RECEIPT ANALYZER — CALLS OPENROUTER GEMINI
 // -------------------------------------------------------------
 app.post("/api/analyze-receipt", async (req, res) => {
-  const { base64Image, expectedAmount } = req.body;
+  const { base64Image, expectedAmount, fileName } = req.body;
   
   if (!base64Image) {
     return res.status(400).json({ success: false, error: "Please upload or snap a GCash receipt photo." });
@@ -762,6 +785,33 @@ app.post("/api/analyze-receipt", async (req, res) => {
   if (!process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY.includes("YOUR_")) {
     console.log("[SIMULATOR RECEIPT MODE ACTIVE] simulating receipt parsing for amount PHP", expectedAmount);
     
+    // Check if filename suggests it is indeed NOT a valid GCash receipt or screenshot
+    const isLikelyGcashReceipt = !fileName || (
+      fileName.toLowerCase().includes("gcash") ||
+      fileName.toLowerCase().includes("receipt") ||
+      fileName.toLowerCase().includes("screenshot") ||
+      fileName.toLowerCase().includes("trans") ||
+      fileName.toLowerCase().includes("pay") ||
+      fileName.toLowerCase().includes("img_") ||
+      fileName.toLowerCase().includes("photo")
+    );
+
+    if (fileName && !isLikelyGcashReceipt) {
+      const errorMsg = `The uploaded photo "${fileName}" is not recognized as a valid GCash receipt screenshot. Please upload a clear receipt or contact admin.`;
+      console.log(`[SIMULATOR REGRESSION] File "${fileName}" does not look like a GCash receipt. Simulating denial.`);
+      
+      logSystemError("GCASH_SCAN_FAILED", errorMsg, {
+        fileName,
+        expectedAmount,
+        image_length: base64Image?.length
+      });
+
+      return res.json({ 
+        success: false, 
+        error: errorMsg 
+      });
+    }
+
     // Simulate natural AI computation latency of 2.5 seconds
     await new Promise((resolve) => setTimeout(resolve, 2500));
 
@@ -845,26 +895,34 @@ Expected Output Format:
     }
 
     if (!parsedOCR.verification_status || parsedOCR.verification_status !== "APPROVED" || !refNum) {
-      return res.json({ success: false, error: "The uploaded photo is not recognized as a valid GCash receipt screenshot. Please upload a clear receipt." });
+      const errorMsg = "The uploaded photo is not recognized as a valid GCash receipt screenshot. Please upload a clear receipt.";
+      logSystemError("GCASH_SCAN_FAILED", errorMsg, { fileName, expectedAmount });
+      return res.json({ success: false, error: errorMsg });
     }
 
     // Reference number validation
     if (refNum.length < 5) {
-      return res.json({ success: false, error: "Count not extract a valid GCash Reference Number from the image." });
+      const errorMsg = "Could not extract a valid GCash Reference Number from the image.";
+      logSystemError("GCASH_SCAN_FAILED", errorMsg, { fileName, expectedAmount, refNum });
+      return res.json({ success: false, error: errorMsg });
     }
 
     // Verify duplicate ref
     const isUsed = await checkRefNumberUsed(refNum);
     if (isUsed) {
-      return res.json({ success: false, error: `This GCash Ref Number (${refNum}) was already submitted for another purchase! Double spending is prohibited.` });
+      const errorMsg = `This GCash Ref Number (${refNum}) was already submitted for another purchase! Double spending is prohibited.`;
+      logSystemError("GCASH_SCAN_FAILED", errorMsg, { fileName, expectedAmount, refNum });
+      return res.json({ success: false, error: errorMsg });
     }
 
     // Cross-check expected amount PHP (with ±1 PHP tolerance)
     const difference = Math.abs(amtNum - Number(expectedAmount));
     if (difference > 1.05) {
+      const errorMsg = `Receipt amount PHP ${amtNum} does not match the required product price PHP ${expectedAmount}. Please pay the correct price.`;
+      logSystemError("GCASH_SCAN_FAILED", errorMsg, { fileName, expectedAmount, amtNum, refNum });
       return res.json({ 
         success: false, 
-        error: `Receipt amount PHP ${amtNum} does not match the required product price PHP ${expectedAmount}. Please pay the correct price.` 
+        error: errorMsg 
       });
     }
 
@@ -882,6 +940,7 @@ Expected Output Format:
 
   } catch (err: any) {
     console.error("OpenRouter direct AI receipt OCR exception:", err);
+    logSystemError("SYSTEM_ERROR", "AI OCR exception: " + err.message, { fileName, expectedAmount });
     res.status(500).json({ success: false, error: "AI OCR processing error: " + err.message });
   }
 });
@@ -1083,6 +1142,7 @@ app.post("/api/create-account", async (req, res) => {
 
   } catch (err: any) {
     console.error("Critical error in CarX automatic cloner process:", err);
+    logSystemError("CLONER_FAILED", "Fulfillment sequence failed: " + err.message, { orderId });
     res.status(500).json({ error: "Failed creating account. Pipeline recovery active: " + err.message });
   }
 });
