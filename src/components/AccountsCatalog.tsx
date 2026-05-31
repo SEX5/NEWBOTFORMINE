@@ -24,6 +24,7 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
   const [carxEmail, setCarxEmail] = useState("");
   const [carxPassword, setCarxPassword] = useState("");
   const [receiptBase64, setReceiptBase64] = useState<string | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
@@ -68,7 +69,6 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
   const handleOpenCheckoutModal = (acc: CarXAccount) => {
     setSelectedAccount(acc);
     setModalStep("credentials");
-    setCustomerEmail("");
     setCarxEmail("");
     setCarxPassword("");
     setOcrError(null);
@@ -77,7 +77,6 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
 
   const handleCloseCheckoutModal = () => {
     setSelectedAccount(null);
-    setCustomerEmail("");
     setCarxEmail("");
     setCarxPassword("");
     setReceiptBase64(null);
@@ -94,6 +93,7 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
       return;
     }
     setOcrError(null);
+    setUploadedFileName(file.name);
     const reader = new FileReader();
     reader.onloadend = () => {
       setReceiptBase64(reader.result as string);
@@ -158,7 +158,8 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           base64Image: receiptBase64,
-          expectedAmount: selectedAccount.price
+          expectedAmount: selectedAccount.price,
+          fileName: uploadedFileName
         })
       });
 
@@ -568,9 +569,28 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
                   )}
 
                   {ocrError && (
-                    <p className="text-xs text-[#FF3333] font-mono leading-relaxed bg-[#FF3333]/5 border border-[#FF3333]/15 p-2.5 rounded text-left">
-                      ⚠ {ocrError}
-                    </p>
+                    <div className="space-y-3">
+                      <p className="text-xs text-[#FF3333] font-mono leading-relaxed bg-[#FF3333]/5 border border-[#FF3333]/15 p-2.5 rounded text-left">
+                        ⚠ {ocrError}
+                      </p>
+                      
+                      <div className="p-3 bg-zinc-950 border border-zinc-850 rounded text-left space-y-2">
+                        <p className="text-[#FFD700] font-mono text-[10px] font-bold uppercase tracking-wider">
+                          Having scan issues or errors?
+                        </p>
+                        <p className="text-zinc-400 font-sans text-[11px] leading-normal">
+                          If your screenshot was not recognized or there was a system error, don't worry. Contact our admin directly with your receipt screenshot to claim your account manually.
+                        </p>
+                        <a
+                          href="https://m.me/lark.abalunan.1"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FFD700] hover:bg-white text-black font-mono font-extrabold uppercase rounded-sm text-[9px] tracking-wider transition-colors"
+                        >
+                          💬 MESSAGE ADMIN AT m.me/lark.abalunan.1
+                        </a>
+                      </div>
+                    </div>
                   )}
 
                   <div className="flex gap-4">
@@ -615,12 +635,12 @@ export default function AccountsCatalog({ onNavigate }: AccountsCatalogProps) {
                     <span className="text-[10px] text-[#FFD700] font-mono uppercase font-bold tracking-wider block text-center animate-pulse">
                       ~10 seconds remaining
                     </span>
-                    <p className="text-zinc-400 text-xs leading-relaxed max-w-sm mx-auto p-4 bg-zinc-950 border border-zinc-900 rounded font-mono text-[9px] text-zinc-500">
-                      &gt; registering email targets on CarX ID endpoints... OK<br />
-                      &gt; creating device uuid: {crypto.randomUUID().replace(/-/g, "").slice(0, 16)}<br />
-                      &gt; downloading profile package snapshot: {selectedAccount.snapshot_url || "default"}<br />
-                      &gt; compressing profile (gzip stream + base64 headers)... OK<br />
-                      &gt; uploading database calibration blocks... OPERATIONAL
+                    <p className="text-zinc-400 text-xs leading-relaxed max-w-sm mx-auto p-4 bg-zinc-950 border border-zinc-900 rounded font-mono text-[9px] text-zinc-500 text-left">
+                      &gt; establishing secure tunnel to cloner node... OK<br />
+                      &gt; preparing memory calibration headers... OK<br />
+                      &gt; synchronizing custom pack resources... PROCESSING<br />
+                      &gt; generating account block session... OK<br />
+                      &gt; verifying multi-phase injection sequence... SECURED ✓
                     </p>
                   </div>
                 </div>
