@@ -89,7 +89,7 @@ export default function App() {
                 <span className="text-[#FFD700]">CarX</span> Street <span className="text-[#FF3333]">Store</span>
               </h1>
               <span className="text-[8px] font-mono tracking-[0.2em] text-zinc-500 uppercase font-bold leading-none block mt-1">
-                PREMIUM RESELLER
+                KARLOWORKS
               </span>
             </div>
           </div>
